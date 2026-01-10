@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 가격 비교 계산기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .products {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .product-card.winner {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .unit-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .unit-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .unit-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .calculate-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .calculate-btn:active {
+            transform: scale(0.98);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .winner-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .conclusion {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .products {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 상품 가격 비교 계산기</h1>
+
+        <div class="unit-select">
+            <button class="unit-btn active" data-unit="10">10g당 가격</button>
+            <button class="unit-btn" data-unit="100">100g당 가격</button>
+        </div>
+
+        <div class="products">
+            <div class="product-card" id="product1">
+                <h2 class="product-title">상품 1</h2>
+                <div class="input-group">
+                    <label>상품명</label>
+                    <input type="text" id="name1" placeholder="예: 브랜드A 초콜릿">
+                </div>
+                <div class="input-group">
+                    <label>총 가격 (원)</label>
+                    <input type="number" id="price1" placeholder="3000" min="0">
+                </div>
+                <div class="input-group">
+                    <label>수량 (개)</label>
+                    <input type="number" id="quantity1" placeholder="10" min="1" value="1">
+                </div>
+                <div class="input-group">
+                    <label>개당 용량 (g)</label>
+                    <input type="number" id="weight1" placeholder="20" min="0" step="0.1">
+                </div>
+            </div>
+
+            <div class="product-card" id="product2">
+                <h2 class="product-title">상품 2</h2>
+                <div class="input-group">
+                    <label>상품명</label>
+                    <input type="text" id="name2" placeholder="예: 브랜드B 초콜릿">
+                </div>
+                <div class="input-group">
+                    <label>총 가격 (원)</label>
+                    <input type="number" id="price2" placeholder="5000" min="0">
+                </div>
+                <div class="input-group">
+                    <label>수량 (개)</label>
+                    <input type="number" id="quantity2" placeholder="13" min="1" value="1">
+                </div>
+                <div class="input-group">
+                    <label>개당 용량 (g)</label>
+                    <input type="number" id="weight2" placeholder="38.5" min="0" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <button class="calculate-btn" onclick="calculate()">💰 가성비 비교하기</button>
+
+        <div class="results" id="results">
+            <div class="result-item">
+                <div class="result-label" id="product1-name">상품 1</div>
+                <div class="result-value" id="product1-result">-</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label" id="product2-name">상품 2</div>
+                <div class="result-value" id="product2-result">-</div>
+            </div>
+            <div class="conclusion" id="conclusion">-</div>
+        </div>
+    </div>
+
+    <script>
+        let selectedUnit = 10;
+
+        // 단위 선택 버튼
+        document.querySelectorAll('.unit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedUnit = parseInt(this.dataset.unit);
+            });
+        });
+
+        function calculate() {
+            // 입력값 가져오기
+            const name1 = document.getElementById('name1').value || '상품 1';
+            const price1 = parseFloat(document.getElementById('price1').value);
+            const quantity1 = parseFloat(document.getElementById('quantity1').value) || 1;
+            const weightPerItem1 = parseFloat(document.getElementById('weight1').value);
+
+            const name2 = document.getElementById('name2').value || '상품 2';
+            const price2 = parseFloat(document.getElementById('price2').value);
+            const quantity2 = parseFloat(document.getElementById('quantity2').value) || 1;
+            const weightPerItem2 = parseFloat(document.getElementById('weight2').value);
+
+            // 입력값 검증
+            if (!price1 || !weightPerItem1 || !price2 || !weightPerItem2) {
+                alert('모든 값을 입력해주세요!');
+                return;
+            }
+
+            if (price1 <= 0 || weightPerItem1 <= 0 || price2 <= 0 || weightPerItem2 <= 0) {
+                alert('가격과 용량은 0보다 커야 합니다!');
+                return;
+            }
+
+            if (quantity1 <= 0 || quantity2 <= 0) {
+                alert('수량은 0보다 커야 합니다!');
+                return;
+            }
+
+            // 총 용량 계산
+            const totalWeight1 = weightPerItem1 * quantity1;
+            const totalWeight2 = weightPerItem2 * quantity2;
+
+            // 개당 가격 계산
+            const pricePerItem1 = price1 / quantity1;
+            const pricePerItem2 = price2 / quantity2;
+
+            // 단위당 가격 계산 (전체 기준)
+            const unitPrice1 = (price1 / totalWeight1) * selectedUnit;
+            const unitPrice2 = (price2 / totalWeight2) * selectedUnit;
+
+            // 결과 표시
+            document.getElementById('product1-name').textContent = name1;
+            document.getElementById('product1-result').innerHTML = 
+                `${selectedUnit}g당 <strong>${unitPrice1.toFixed(0)}원</strong><br>` +
+                `<small style="color: #666;">개당 ${pricePerItem1.toFixed(0)}원 (${weightPerItem1.toFixed(1)}g) · 총 ${totalWeight1.toFixed(1)}g</small>`;
+
+            document.getElementById('product2-name').textContent = name2;
+            document.getElementById('product2-result').innerHTML = 
+                `${selectedUnit}g당 <strong>${unitPrice2.toFixed(0)}원</strong><br>` +
+                `<small style="color: #666;">개당 ${pricePerItem2.toFixed(0)}원 (${weightPerItem2.toFixed(1)}g) · 총 ${totalWeight2.toFixed(1)}g</small>`;
+
+            // 승자 판정
+            const product1Card = document.getElementById('product1');
+            const product2Card = document.getElementById('product2');
+            
+            product1Card.classList.remove('winner');
+            product2Card.classList.remove('winner');
+
+            let conclusion = '';
+            let difference = Math.abs(unitPrice1 - unitPrice2);
+            let percentDiff = ((difference / Math.max(unitPrice1, unitPrice2)) * 100).toFixed(1);
+
+            if (unitPrice1 < unitPrice2) {
+                product1Card.classList.add('winner');
+                document.getElementById('product1-result').innerHTML += 
+                    '<span class="winner-badge">🏆 가성비 우승!</span>';
+                conclusion = `<strong>${name1}</strong>이(가) ${selectedUnit}g당 <strong>${difference.toFixed(0)}원</strong> 더 저렴해요! (약 ${percentDiff}% 절약)`;
+            } else if (unitPrice2 < unitPrice1) {
+                product2Card.classList.add('winner');
+                document.getElementById('product2-result').innerHTML += 
+                    '<span class="winner-badge">🏆 가성비 우승!</span>';
+                conclusion = `<strong>${name2}</strong>이(가) ${selectedUnit}g당 <strong>${difference.toFixed(0)}원</strong> 더 저렴해요! (약 ${percentDiff}% 절약)`;
+            } else {
+                conclusion = `두 상품의 가성비가 똑같아요! 🤝`;
+            }
+
+            document.getElementById('conclusion').innerHTML = conclusion;
+            document.getElementById('results').classList.add('show');
+
+            // 결과로 스크롤
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Enter 키로도 계산 가능하게
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    calculate();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
