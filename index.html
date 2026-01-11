@@ -62,6 +62,10 @@
             border-color: #28a745;
         }
 
+        .product-card.hidden {
+            display: none;
+        }
+
         .product-title {
             font-size: 18px;
             font-weight: bold;
@@ -158,6 +162,10 @@
             background: white;
             border-radius: 10px;
             border-left: 4px solid #667eea;
+        }
+
+        .result-item.hidden {
+            display: none;
         }
 
         .result-label {
@@ -260,14 +268,14 @@
             </div>
         </div>
 
-        <button class="calculate-btn" onclick="calculate()">💰 가성비 비교하기</button>
+        <button class="calculate-btn" onclick="calculate()">💰 계산하기</button>
 
         <div class="results" id="results">
-            <div class="result-item">
+            <div class="result-item" id="result1">
                 <div class="result-label" id="product1-name">상품 1</div>
                 <div class="result-value" id="product1-result">-</div>
             </div>
-            <div class="result-item">
+            <div class="result-item" id="result2">
                 <div class="result-label" id="product2-name">상품 2</div>
                 <div class="result-value" id="product2-result">-</div>
             </div>
@@ -299,46 +307,59 @@
             const quantity2 = parseFloat(document.getElementById('quantity2').value) || 1;
             const weightPerItem2 = parseFloat(document.getElementById('weight2').value);
 
-            // 입력값 검증
-            if (!price1 || !weightPerItem1 || !price2 || !weightPerItem2) {
-                alert('모든 값을 입력해주세요!');
+            // 최소 하나의 상품은 입력되어야 함
+            const hasProduct1 = price1 && weightPerItem1;
+            const hasProduct2 = price2 && weightPerItem2;
+
+            if (!hasProduct1 && !hasProduct2) {
+                alert('최소 하나의 상품 정보를 입력해주세요!');
                 return;
             }
 
-            if (price1 <= 0 || weightPerItem1 <= 0 || price2 <= 0 || weightPerItem2 <= 0) {
-                alert('가격과 용량은 0보다 커야 합니다!');
+            // 입력된 상품의 유효성 검증
+            if (hasProduct1 && (price1 <= 0 || weightPerItem1 <= 0 || quantity1 <= 0)) {
+                alert('상품 1의 가격, 용량, 수량은 0보다 커야 합니다!');
                 return;
             }
 
-            if (quantity1 <= 0 || quantity2 <= 0) {
-                alert('수량은 0보다 커야 합니다!');
+            if (hasProduct2 && (price2 <= 0 || weightPerItem2 <= 0 || quantity2 <= 0)) {
+                alert('상품 2의 가격, 용량, 수량은 0보다 커야 합니다!');
                 return;
             }
 
-            // 총 용량 계산
-            const totalWeight1 = weightPerItem1 * quantity1;
-            const totalWeight2 = weightPerItem2 * quantity2;
+            // 결과 영역 초기화
+            document.getElementById('result1').classList.add('hidden');
+            document.getElementById('result2').classList.add('hidden');
+            
+            let unitPrice1, unitPrice2;
+            
+            // 상품 1 계산
+            if (hasProduct1) {
+                const totalWeight1 = weightPerItem1 * quantity1;
+                const pricePerItem1 = price1 / quantity1;
+                unitPrice1 = (price1 / totalWeight1) * selectedUnit;
 
-            // 개당 가격 계산
-            const pricePerItem1 = price1 / quantity1;
-            const pricePerItem2 = price2 / quantity2;
+                document.getElementById('product1-name').textContent = name1;
+                document.getElementById('product1-result').innerHTML = 
+                    `${selectedUnit}g당 <strong>${unitPrice1.toFixed(0)}원</strong><br>` +
+                    `<small style="color: #666;">개당 ${pricePerItem1.toFixed(0)}원 (${weightPerItem1.toFixed(1)}g) · 총 ${totalWeight1.toFixed(1)}g</small>`;
+                document.getElementById('result1').classList.remove('hidden');
+            }
 
-            // 단위당 가격 계산 (전체 기준)
-            const unitPrice1 = (price1 / totalWeight1) * selectedUnit;
-            const unitPrice2 = (price2 / totalWeight2) * selectedUnit;
+            // 상품 2 계산
+            if (hasProduct2) {
+                const totalWeight2 = weightPerItem2 * quantity2;
+                const pricePerItem2 = price2 / quantity2;
+                unitPrice2 = (price2 / totalWeight2) * selectedUnit;
 
-            // 결과 표시
-            document.getElementById('product1-name').textContent = name1;
-            document.getElementById('product1-result').innerHTML = 
-                `${selectedUnit}g당 <strong>${unitPrice1.toFixed(0)}원</strong><br>` +
-                `<small style="color: #666;">개당 ${pricePerItem1.toFixed(0)}원 (${weightPerItem1.toFixed(1)}g) · 총 ${totalWeight1.toFixed(1)}g</small>`;
+                document.getElementById('product2-name').textContent = name2;
+                document.getElementById('product2-result').innerHTML = 
+                    `${selectedUnit}g당 <strong>${unitPrice2.toFixed(0)}원</strong><br>` +
+                    `<small style="color: #666;">개당 ${pricePerItem2.toFixed(0)}원 (${weightPerItem2.toFixed(1)}g) · 총 ${totalWeight2.toFixed(1)}g</small>`;
+                document.getElementById('result2').classList.remove('hidden');
+            }
 
-            document.getElementById('product2-name').textContent = name2;
-            document.getElementById('product2-result').innerHTML = 
-                `${selectedUnit}g당 <strong>${unitPrice2.toFixed(0)}원</strong><br>` +
-                `<small style="color: #666;">개당 ${pricePerItem2.toFixed(0)}원 (${weightPerItem2.toFixed(1)}g) · 총 ${totalWeight2.toFixed(1)}g</small>`;
-
-            // 승자 판정
+            // 승자 판정 (두 상품 모두 입력된 경우에만)
             const product1Card = document.getElementById('product1');
             const product2Card = document.getElementById('product2');
             
@@ -346,21 +367,28 @@
             product2Card.classList.remove('winner');
 
             let conclusion = '';
-            let difference = Math.abs(unitPrice1 - unitPrice2);
-            let percentDiff = ((difference / Math.max(unitPrice1, unitPrice2)) * 100).toFixed(1);
 
-            if (unitPrice1 < unitPrice2) {
-                product1Card.classList.add('winner');
-                document.getElementById('product1-result').innerHTML += 
-                    '<span class="winner-badge">🏆 가성비 우승!</span>';
-                conclusion = `<strong>${name1}</strong>이(가) ${selectedUnit}g당 <strong>${difference.toFixed(0)}원</strong> 더 저렴해요! (약 ${percentDiff}% 절약)`;
-            } else if (unitPrice2 < unitPrice1) {
-                product2Card.classList.add('winner');
-                document.getElementById('product2-result').innerHTML += 
-                    '<span class="winner-badge">🏆 가성비 우승!</span>';
-                conclusion = `<strong>${name2}</strong>이(가) ${selectedUnit}g당 <strong>${difference.toFixed(0)}원</strong> 더 저렴해요! (약 ${percentDiff}% 절약)`;
+            if (hasProduct1 && hasProduct2) {
+                let difference = Math.abs(unitPrice1 - unitPrice2);
+                let percentDiff = ((difference / Math.max(unitPrice1, unitPrice2)) * 100).toFixed(1);
+
+                if (unitPrice1 < unitPrice2) {
+                    product1Card.classList.add('winner');
+                    document.getElementById('product1-result').innerHTML += 
+                        '<span class="winner-badge">🏆 가성비 우승!</span>';
+                    conclusion = `<strong>${name1}</strong>이(가) ${selectedUnit}g당 <strong>${difference.toFixed(0)}원</strong> 더 저렴해요! (약 ${percentDiff}% 절약)`;
+                } else if (unitPrice2 < unitPrice1) {
+                    product2Card.classList.add('winner');
+                    document.getElementById('product2-result').innerHTML += 
+                        '<span class="winner-badge">🏆 가성비 우승!</span>';
+                    conclusion = `<strong>${name2}</strong>이(가) ${selectedUnit}g당 <strong>${difference.toFixed(0)}원</strong> 더 저렴해요! (약 ${percentDiff}% 절약)`;
+                } else {
+                    conclusion = `두 상품의 가성비가 똑같아요! 🤝`;
+                }
+            } else if (hasProduct1) {
+                conclusion = `${name1}의 ${selectedUnit}g당 가격이 계산되었어요! 다른 상품과 비교하려면 상품 2도 입력해주세요.`;
             } else {
-                conclusion = `두 상품의 가성비가 똑같아요! 🤝`;
+                conclusion = `${name2}의 ${selectedUnit}g당 가격이 계산되었어요! 다른 상품과 비교하려면 상품 1도 입력해주세요.`;
             }
 
             document.getElementById('conclusion').innerHTML = conclusion;
